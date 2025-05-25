@@ -1,48 +1,25 @@
 mod utils;
 
+use std::f64::consts::PI;
 use wasm_bindgen::prelude::*;
 
-use std::f64::consts::PI;
-
-cfg_if! {
-    if #[cfg(feature = "wee_alloc")] {
-        #[global_allocator]
-        static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
-    }
-}
-
-// error function, Abramowitz and Stegun formula
-pub fn erf(x: f64) -> f64 {
-    let a1 = 0.254829592;
-    let a2 = -0.284496736;
-    let a3 = 1.421413741;
-    let a4 = -1.453152027;
-    let a5 = 1.061405429;
-    let p = 0.3275911;
-
-    let sign = if x < 0.0 { -1.0 } else { 1.0 };
-    let x = x.abs();
-
-    let t = 1.0 / (1.0 + p * x);
-    let y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * (-x * x).exp();
-
-    sign * y
-}
-
+#[wasm_bindgen]
 pub struct BlackScholes {
-    pub spot_price: f64,         // S - spot price
-    pub strike_price: f64,       // K - strike price
-    pub time_to_expiry: f64,     // T - time to expiry in whatever unit
-    pub risk_free_rate: f64,     // r - interest rate
-    pub standard_deviation: f64, // sigma - Volatility/std.dev. of the underlying asset
+    spot_price: f64,         // S - spot price
+    strike_price: f64,       // K - strike price
+    time_to_expiry: f64,     // T - time to expiry in whatever unit
+    risk_free_rate: f64,     // r - interest rate
+    standard_deviation: f64, // sigma - Volatility/std.dev. of the underlying asset
 }
 
+#[wasm_bindgen]
 #[derive(Debug, Clone, Copy)]
 pub enum OptionType {
     Call,
     Put,
 }
 
+#[wasm_bindgen]
 #[derive(Debug)]
 pub struct Greeks {
     pub delta: f64, // price sensitivity to underlying price
@@ -52,15 +29,17 @@ pub struct Greeks {
     pub rho: f64,   // price sensitivity to interest rate
 }
 
+#[wasm_bindgen]
 impl BlackScholes {
+    #[wasm_bindgen(constructor)]
     pub fn new(
         spot_price: f64,
         strike_price: f64,
         time_to_expiry: f64,
         risk_free_rate: f64,
         standard_deviation: f64,
-    ) -> Self {
-        Self {
+    ) -> BlackScholes {
+        BlackScholes {
             spot_price,
             strike_price,
             time_to_expiry,
@@ -69,25 +48,59 @@ impl BlackScholes {
         }
     }
 
-    fn d1(&self) -> f64 {
+    #[wasm_bindgen(setter)]
+    pub fn set_spot_price(&mut self, value: f64) {
+        self.spot_price = value;
+    }
+
+    #[wasm_bindgen(setter)]
+    pub fn set_strike_price(&mut self, value: f64) {
+        self.strike_price = value;
+    }
+
+    #[wasm_bindgen(setter)]
+    pub fn set_time_to_expiry(&mut self, value: f64) {
+        self.time_to_expiry = value;
+    }
+
+    #[wasm_bindgen(setter)]
+    pub fn set_risk_free_rate(&mut self, value: f64) {
+        self.risk_free_rate = value;
+    }
+
+    #[wasm_bindgen(setter)]
+    pub fn set_standard_deviation(&mut self, value: f64) {
+        self.standard_deviation = value;
+    }
+
+    // Made public for WASM binding
+    #[wasm_bindgen]
+    pub fn d1(&self) -> f64 {
         let numerator = (self.spot_price / self.strike_price).ln()
             + (self.risk_free_rate + 0.5 * self.standard_deviation.powi(2)) * self.time_to_expiry;
         let denominator = self.standard_deviation * self.time_to_expiry.sqrt();
         numerator / denominator
     }
 
-    fn d2(&self) -> f64 {
+    // Made public for WASM binding
+    #[wasm_bindgen]
+    pub fn d2(&self) -> f64 {
         self.d1() - self.standard_deviation * self.time_to_expiry.sqrt()
     }
 
-    fn norm_cdf(x: f64) -> f64 {
+    // Made public for WASM binding
+    #[wasm_bindgen]
+    pub fn norm_cdf(x: f64) -> f64 {
         0.5 * (1.0 + erf(x / 2.0_f64.sqrt()))
     }
 
-    fn norm_pdf(x: f64) -> f64 {
+    // Made public for WASM binding
+    #[wasm_bindgen]
+    pub fn norm_pdf(x: f64) -> f64 {
         (-0.5 * x.powi(2)).exp() / (2.0 * PI).sqrt()
     }
 
+    #[wasm_bindgen]
     pub fn price(&self, option_type: OptionType) -> f64 {
         let d1 = self.d1();
         let d2 = self.d2();
@@ -105,6 +118,7 @@ impl BlackScholes {
         }
     }
 
+    #[wasm_bindgen]
     pub fn greeks(&self, option_type: OptionType) -> Greeks {
         let d1 = self.d1();
         let d2 = self.d2();
@@ -154,6 +168,7 @@ impl BlackScholes {
         }
     }
 
+    #[wasm_bindgen]
     pub fn implied_volatility(
         &mut self,
         market_price: f64,
@@ -185,4 +200,62 @@ impl BlackScholes {
 
         Err("Failed to converge...".to_string())
     }
+}
+
+#[wasm_bindgen]
+// error function, Abramowitz and Stegun formula
+// I wanted to use statrs, a possible TODO actually
+pub fn erf(x: f64) -> f64 {
+    let a1 = 0.254829592;
+    let a2 = -0.284496736;
+    let a3 = 1.421413741;
+    let a4 = -1.453152027;
+    let a5 = 1.061405429;
+    let p = 0.3275911;
+
+    let sign = if x < 0.0 { -1.0 } else { 1.0 };
+    let x = x.abs();
+
+    let t = 1.0 / (1.0 + p * x);
+    let y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * (-x * x).exp();
+
+    sign * y
+}
+
+#[wasm_bindgen]
+pub fn calculate_option_price(
+    spot_price: f64,
+    strike_price: f64,
+    time_to_expiry: f64,
+    risk_free_rate: f64,
+    volatility: f64,
+    option_type: OptionType,
+) -> f64 {
+    let bs = BlackScholes::new(
+        spot_price,
+        strike_price,
+        time_to_expiry,
+        risk_free_rate,
+        volatility,
+    );
+    bs.price(option_type)
+}
+
+#[wasm_bindgen]
+pub fn calculate_greeks(
+    spot_price: f64,
+    strike_price: f64,
+    time_to_expiry: f64,
+    risk_free_rate: f64,
+    volatility: f64,
+    option_type: OptionType,
+) -> Greeks {
+    let bs = BlackScholes::new(
+        spot_price,
+        strike_price,
+        time_to_expiry,
+        risk_free_rate,
+        volatility,
+    );
+    bs.greeks(option_type)
 }

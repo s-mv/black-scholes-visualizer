@@ -1,3 +1,2 @@
 TODO for now.
-
-`wasm-pack build --features wee_alloc`
+wasm-pack build --target nodejs --out-dir ./frontend/pkg
