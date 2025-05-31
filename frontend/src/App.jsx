@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'preact/hooks'
-import { OptionType, calculate_option_price, calculate_greeks } from './pkg/black_scholes'
-import { ThreeScene } from './components/ThreeScene'
+import { useState, useEffect } from 'preact/hooks';
+import { OptionType, calculate_option_price, calculate_greeks } from 'black-scholes';
+import { ThreeScene } from './components/ThreeScene';
 import Chart2D from './components/Chart2D';
 import './index.css';
 import { GreekAnnotations } from './components/GreekAnnotations';
