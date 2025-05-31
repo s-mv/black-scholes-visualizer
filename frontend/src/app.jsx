@@ -2,11 +2,25 @@ import { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUpload, faSyncAlt, faMoon, faSun } from '@fortawesome/free-solid-svg-icons';
 import Papa from 'papaparse';
-import { Line } from 'react-chartjs-2';
-import { Chart as ChartJS, LineElement, PointElement, LinearScale, Title, Tooltip, Legend, CategoryScale } from 'chart.js';
+import { Chart as ChartJS, LineElement, PointElement, LinearScale, Title, Tooltip, Legend, CategoryScale, TimeScale, TimeSeriesScale } from 'chart.js';
+import zoomPlugin from 'chartjs-plugin-zoom';
 import { ThreeScene } from './ThreeScene';
+import { Chart2D } from './Chart2D';
+import { CandlestickController, CandlestickElement } from 'chartjs-chart-financial';
 
-ChartJS.register(LineElement, PointElement, LinearScale, Title, Tooltip, Legend, CategoryScale);
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  zoomPlugin,
+  TimeSeriesScale,
+  CandlestickController,
+  CandlestickElement
+);
 
 export const App = () => {
   const [wasmLoaded, setWasmLoaded] = useState(false);
@@ -83,73 +97,38 @@ export const App = () => {
     setLoading(true);
 
     const randomPoints = [];
-    const timeSteps = 100;
+    const intervalMinutes = 5;
+    const totalIntervals = (5 * 24 * 60) / intervalMinutes;
     const initialPrice = params.spotPrice;
     const drift = params.riskFreeRate;
     const volatility = params.volatility;
-    const dt = params.timeToExpiry / timeSteps;
+    const dt = intervalMinutes / (60 * 24);
 
     let currentPrice = initialPrice;
 
-    for (let i = 0; i < timeSteps; i++) {
+    for (let i = 0; i < totalIntervals; i++) {
       const randomShock = Math.random() * 2 - 1;
       const priceChange = drift * currentPrice * dt + volatility * currentPrice * Math.sqrt(dt) * randomShock;
-      currentPrice += priceChange;
+      const open = currentPrice;
+      const close = currentPrice + priceChange;
+      const high = Math.max(open, close, open + Math.random() * volatility * currentPrice);
+      const low = Math.min(open, close, open - Math.random() * volatility * currentPrice);
+      const volume = Math.floor(Math.random() * 1000) + 100; // Random volume between 100 and 1100
 
       randomPoints.push({
-        time: i * dt,
-        price: currentPrice
+        timestamp: new Date(Date.now() - i * intervalMinutes * 60 * 1000),
+        open,
+        high,
+        low,
+        close,
+        volume,
       });
+
+      currentPrice = close;
     }
 
-    setData(randomPoints);
+    setData(randomPoints.reverse()); // Reverse to have chronological order
     setLoading(false);
-  };
-
-  const get2DGraphData = () => {
-    const labels = data.map(point => point.time.toFixed(2));
-    const prices = data.map(point => point.price);
-
-    return {
-      labels,
-      datasets: [
-        {
-          label: 'Option Price',
-          data: prices,
-          borderColor: theme === 'dark' ? '#4F46E5' : '#3B82F6',
-          backgroundColor: theme === 'dark' ? '#4F46E5' : '#3B82F6',
-          tension: 0.4,
-          fill: false
-        }
-      ]
-    };
-  };
-
-  const graphOptions = {
-    responsive: true,
-    plugins: {
-      legend: {
-        display: true,
-        labels: {
-          color: theme === 'dark' ? '#FFFFFF' : '#000000'
-        }
-      },
-      tooltip: {
-        enabled: true
-      }
-    },
-    scales: {
-      x: {
-        ticks: {
-          color: theme === 'dark' ? '#FFFFFF' : '#000000'
-        }
-      },
-      y: {
-        ticks: {
-          color: theme === 'dark' ? '#FFFFFF' : '#000000'
-        }
-      }
-    }
   };
 
   if (!wasmLoaded) {
@@ -213,7 +192,7 @@ export const App = () => {
 
           <div className="space-y-4">
             <div className={`border ${theme === 'dark' ? 'border-gray-700' : 'border-gray-300'} rounded p-3 h-[400px] relative`}>
-              <ThreeScene params={params} data={data} vizSettings={vizSettings} loading={loading} setLoading={setLoading} />
+              <ThreeScene params={params} data={data} vizSettings={vizSettings} loading={loading} setLoading={setLoading} theme={theme} />
               {loading && (
                 <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded">
                   <div className="text-white text-xl">Generating surface...</div>
@@ -225,7 +204,7 @@ export const App = () => {
               <h3 className="text-lg font-semibold mb-3">Price Over Time</h3>
               {data.length > 0 ? (
                 <div className="w-full h-full">
-                  <Line data={get2DGraphData()} options={graphOptions} />
+                  <Chart2D data={data} theme={theme} />
                 </div>
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
