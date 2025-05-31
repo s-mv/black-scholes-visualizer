@@ -458,7 +458,7 @@ var require_stdin = __commonJS({
       function mm(n, t) {
         return typeof t == "function" ? t(n) : t;
       }
-      const e0 = "/black-scholes-visualizer/assets/black_scholes_bg-iksvb1Ok.wasm", n0 = async (n = {}, t) => {
+      const e0 = "/black-scholes-visualizer/assets/black_scholes_bg-DN3QuFE0.wasm", n0 = async (n = {}, t) => {
         let e;
         if (t.startsWith("data:")) {
           const i = t.replace(/^data:.*?base64,/, "");
