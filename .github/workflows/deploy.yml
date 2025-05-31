@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pages
+name: Deploy to GitHub Pages 2.0
 
 on:
   workflow_dispatch:
@@ -17,8 +17,8 @@ jobs:
     - name: Install wasm-pack
       run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
         
-    - name: Build WASM
-      run: wasm-pack build --target nodejs --out-dir ./frontend/pkg
+    - name: Build WASM to node_modules
+      run: wasm-pack build --target bundler --out-dir ./frontend/node_modules/black-scholes
     
     - name: Setup Node
       uses: actions/setup-node@v3
