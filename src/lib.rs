@@ -73,7 +73,6 @@ impl BlackScholes {
         self.standard_deviation = value;
     }
 
-    // Made public for WASM binding
     #[wasm_bindgen]
     pub fn d1(&self) -> f64 {
         let numerator = (self.spot_price / self.strike_price).ln()
@@ -82,19 +81,16 @@ impl BlackScholes {
         numerator / denominator
     }
 
-    // Made public for WASM binding
     #[wasm_bindgen]
     pub fn d2(&self) -> f64 {
         self.d1() - self.standard_deviation * self.time_to_expiry.sqrt()
     }
 
-    // Made public for WASM binding
     #[wasm_bindgen]
     pub fn norm_cdf(x: f64) -> f64 {
         0.5 * (1.0 + erf(x / 2.0_f64.sqrt()))
     }
 
-    // Made public for WASM binding
     #[wasm_bindgen]
     pub fn norm_pdf(x: f64) -> f64 {
         (-0.5 * x.powi(2)).exp() / (2.0 * PI).sqrt()

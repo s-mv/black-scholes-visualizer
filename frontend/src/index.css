@@ -1,1 +1,44 @@
 @import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply antialiased text-[14px] leading-[1.5];
+  }
+  
+  .dark {
+    color-scheme: dark;
+  }
+}
+
+@layer components {
+  .github-card {
+    @apply border border-gray-200 dark:border-gray-700 rounded-md bg-white dark:bg-purple-950;
+  }
+
+  .github-button {
+    @apply px-3 py-[5px] text-sm border rounded-md 
+           border-gray-300 dark:border-gray-600
+           hover:bg-gray-50 dark:hover:bg-gray-700
+           transition-colors duration-200;
+  }
+  
+  .github-input {
+    @apply px-3 py-[5px] text-sm border rounded-md
+           border-gray-300 dark:border-gray-600
+           bg-white dark:bg-gray-800
+           focus:border-purple-500 dark:focus:border-purple-400
+           focus:ring-1 focus:ring-purple-500 dark:focus:ring-purple-400
+           outline-none;
+  }
+}
+
+@layer utilities {
+  .transition-transform {
+    transition-property: transform;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+  }
+}
