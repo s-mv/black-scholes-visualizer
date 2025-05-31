@@ -1,13 +1,24 @@
-name: Deploy to GitHub Pages 2.0
+name: Deploy to GitHub Pages
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:  # Manual trigger only
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+    
+    - name: Setup Node
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        
+    ### THIS HAS BEEN DELETING NODE MODULES ###
+    - name: Install Frontend Dependencies
+      run: |
+        cd frontend
+        npm ci
     
     - name: Setup Rust
       uses: actions-rs/toolchain@v1
@@ -17,18 +28,12 @@ jobs:
     - name: Install wasm-pack
       run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
         
-    - name: Build WASM to node_modules
+    - name: Build WASM to node_modules (after npm ci)
       run: wasm-pack build --target bundler --out-dir ./frontend/node_modules/black-scholes
-    
-    - name: Setup Node
-      uses: actions/setup-node@v3
-      with:
-        node-version: '18'
         
-    - name: Install and Build Frontend
+    - name: Build Frontend
       run: |
         cd frontend
-        npm ci
         npm run build
         
     - name: Move build to root
