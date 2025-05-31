@@ -1,6 +1,6 @@
 # A demonstration of the Black-Scholes Model in Rust (shipped to WASM)
 
-[this link doesn't work yet](https://example.com)
+[Run it right now!](https://s-mv.github.io/black-scholes-visualizer/)
 
 This project demonstrates a pricing engine for European call/put options using
 an application of the Black-Scholes (or Black-Scholes-Merton) equation.
